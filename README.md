@@ -1,8 +1,13 @@
 # News Trends Demo
 
-The News Trends Project pulls data from multiple news sources from countries around the world (English language only) and create graphs showing common word and news trends. 
+The News Trends Project processes news content from sources around the United States and presents a graphical representation of trending words to the application user. The project uses thread-level and data-level parallelism to retrieve, processes and combine the results. 
 
-News content is retrieved from https://newsapi.org/
+During processing, words which are common and not meaningful for establishing word trends are removed (these settings be can changed in the application properties to further restrict the results or to broaden them).
+
+Sample words that are removed: I, at, there, the, of, on etc.
+
+News content is retrieved from https://newsapi.org/.
+Developmer Documentation: https://newsapi.org/docs
 
 Getting Started
 ==========================
@@ -16,7 +21,7 @@ Before you can begin running the application, you will need to create a develope
 To create an account go to: https://newsapi.org/register
 Keep track of the API Key that they give you to use in step #2.
 
-Important Note: Only 500 requests per day are allowed from a developer account. If you start seeing 429s this means that you have exceeded the allowed limits for the day.
+**Important Note: Only 500 requests per day are allowed from a developer account. If you start seeing 429s this means that you have exceeded the allowed limits for the day.
 
 Cloning, Compiling, and Running
 --------------------------------
@@ -47,3 +52,11 @@ $ mvn clean compile assembly:single
 $ java -jar target/news-trends-1.0-jar-with-dependencies.jar 
 ```
 
+At the prompt, enter the number of days to process: 
+```sh
+$ java -jar target/news-trends-1.0-jar-with-dependencies.jar
+Please enter the number of days to process (1 to 5): 
+5
+```
+
+After the data has processed, you will be given a link to view the calculated results.

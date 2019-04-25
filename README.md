@@ -4,11 +4,10 @@ The News Trends Project pulls data from multiple news sources from countries aro
 
 News content is retrieved from https://newsapi.org/
 
-Project Introduction
-==========================
-
 Getting Started
 ==========================
+
+There are a few steps that you need to take before you can start processing data and analyzing trends.
 
 Creating a NewsAPI account
 --------------------------

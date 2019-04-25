@@ -1,13 +1,19 @@
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import j2html.tags.ContainerTag;
-
 import java.io.*;
 import java.util.*;
-
 import static j2html.TagCreator.*;
 import static j2html.TagCreator.body;
 import static j2html.TagCreator.h3;
+
+/**
+ * Abby Parker
+ * CSIS 612
+ *
+ * Uses a library called h2html for generating the report html
+ * See: https://j2html.com/
+ */
 
 public class ReportUtil {
     Properties properties;

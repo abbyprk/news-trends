@@ -1,3 +1,9 @@
+/*
+ *  Abby Parker
+ *  CSIS 612
+ *
+ *  On page load, initialize the word map and the top 20 and bottom 20 lists
+*/
 $(document).ready(function () {
     var dataString = $('#wordMapData').text();
     try {

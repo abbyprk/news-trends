@@ -22,12 +22,12 @@ Important Note: Only 500 requests per day are allowed from a developer account. 
 Cloning, Compiling, and Running
 --------------------------------
 
-# 1. First, clone down the repository. 
+1. First, clone down the repository. 
 ```sh
 $ git clone <paste github URL from git>
 $ cd news-trends
 ```
-# 2. Edit the application properties so that it points to your local folder and api key
+2. Edit the application properties so that it points to your local folder and api key
 In the news-trends/src/main/resources/Application.properties folder, edit the following properties:
 
 ```
@@ -37,13 +37,13 @@ path.to.reports={path_to_project}/news-trends/src/main/static
 ```
 Examples have been to the file already to make it easier to understand the format.
 
-# 3. From the news-trends directory compile the project
+3. From the news-trends directory compile the project
 ```sh
 $ cd news-trends
 $ mvn clean compile assembly:single
 ```
 
-# 4. After the project has compiled successfully enter this command to run:
+4. After the project has compiled successfully enter this command to run:
 ```sh
 $ java -jar target/news-trends-1.0-jar-with-dependencies.jar 
 ```

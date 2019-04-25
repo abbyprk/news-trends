@@ -1,6 +1,6 @@
 # News Trends Demo
 
-The News Trends Project processes news content from sources around the United States and presents a graphical representation of trending words to the application user. The project uses thread-level and data-level parallelism to retrieve, processes and combine the results. 
+The News Trends Project processes news content from sources around the United States and presents a graphical representation of trending words to the application user. The project uses thread-level and data-level parallelism to retrieve, process and combine the results. 
 
 During processing, words which are common and not meaningful for establishing word trends are removed (these settings be can changed in the application properties to further restrict the results or to broaden them).
 

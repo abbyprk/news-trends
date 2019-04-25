@@ -4,10 +4,10 @@ The News Trends Project processes news content from sources around the United St
 
 During processing, words which are common and not meaningful for establishing word trends are removed (these settings be can changed in the application properties to further restrict the results or to broaden them).
 
-Sample words that are removed: I, at, there, the, of, on etc.
+Sample words that are removed: `I, at, there, the, of, on etc.`
 
-News content is retrieved from https://newsapi.org/.
-Developmer Documentation: https://newsapi.org/docs
+- News content is retrieved from https://newsapi.org/.
+- Developmer Documentation: https://newsapi.org/docs
 
 Getting Started
 ==========================

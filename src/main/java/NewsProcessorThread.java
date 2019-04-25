@@ -7,7 +7,7 @@ import java.util.Properties;
  * Abby Parker
  * CSIS 612
  *
- * Processes json news data and populates a shared sorted hashmap with the results
+ * Processes json news data that it is given and populates a shared sorted hashmap with the results
  */
 public class NewsProcessorThread extends Thread {
     public static final String COMMON_PUNCTUATION_MATCHER = "[\\.\\?\\*\\(\\)\\[\\]\\!,]+";
@@ -19,16 +19,16 @@ public class NewsProcessorThread extends Thread {
     private JsonNode newsDataJson;
     private Properties properties;
 
-    NewsProcessorThread(HashMap sharedWordTrendsMap, JsonNode news, Properties properties) {
+    NewsProcessorThread(HashMap<String, Integer> sharedWordTrendsMap, JsonNode news, Properties properties) {
         this.sharedSortedWordTrendsMap = sharedWordTrendsMap;
-        this.localWordTrendsMap = new HashMap();
+        this.localWordTrendsMap = new HashMap<>();
         this.newsDataJson = news;
         this.properties = properties;
-        commonWordsMatcher = properties.get("common.words").toString();
+        commonWordsMatcher = properties.get("common.words").toString(); //get the list of common words to filter out from the properties
     }
 
     /**
-     * Processes each news document and stores the weighted word results in the localWordTrendsMap
+     * Processes each of the news objects and stores the weighted word results in the localWordTrendsMap
      * At the end, update the sharedSortedWordTrendsMap
      */
     public void run() {
@@ -36,6 +36,14 @@ public class NewsProcessorThread extends Thread {
         updateSharedSortedWordTrends();
     }
 
+    /**
+     * processData - processes each article adds the individual words and word count to the localWordTrendsMap
+     *
+     * The method uses regular expressions for parsing the data and filtering out punctuation, numbers & special characters,
+     * and common words that do not provide a lot of value for this exercise.
+     *
+     * Note: The common words can be edited in the Application.properties file to be more or less restrictive
+     */
     private void processData() {
         try {
             ArrayNode articles = (ArrayNode) newsDataJson.get("articles");
@@ -61,7 +69,7 @@ public class NewsProcessorThread extends Thread {
     }
 
     /**
-     * Synchronized method that updates the shared Map with the data processed by the thread
+     * Synchronized method that updates the shared Map with the data processed by this thread
      */
     private synchronized void updateSharedSortedWordTrends() {
         for (String word : localWordTrendsMap.keySet()) {

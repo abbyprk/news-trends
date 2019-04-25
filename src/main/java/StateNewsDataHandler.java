@@ -1,25 +1,17 @@
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import j2html.tags.ContainerTag;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.HttpClientBuilder;
-
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import static j2html.TagCreator.*;
 
 /**
  * Abby Parker
  * CSIS 612
  *
- * Handles retrieving data and farming out processing to the NewsProcessorThreads
+ * This class uses thread-level and data-level parallelism to retrieve and process news data and establish trends across US States.
  */
 public class StateNewsDataHandler {
     private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -46,10 +38,21 @@ public class StateNewsDataHandler {
     }
 
     /**
+     * processNewsTrendsByState
+     *
+     * This method accepts two parameters which tells us how many days we need to process and
+     * which day to start on. The method will take the date passed in and retrieve data for X days
+     * prior to that when processing.
+     *
+     * The method loops through each state for the dates requested and spins up a NewsProcessorThread for
+     * every file containing news data that was found (data-level parallelism). If the file for the
+     * date requested is not found, the method will create a new NewsAPIRetrieverThread to reach out to the
+     * NewsAPI and store down the data.  These two tasks will run in parallel (as applicable) until all of the
+     * requested data has been processed or retrieved.
      *
      * @param date - date to start with
      * @param totalDays - the total number of days back that we should count
-     * @return
+     * @return newsTrendsMap - updated with all the data processed by the NewsProcessorThreads
      */
     protected HashMap<String, Integer> processNewsTrendsByState(Date date, int totalDays) {
         Calendar calDate = Calendar.getInstance();
@@ -74,9 +77,12 @@ public class StateNewsDataHandler {
                         activeThreadsList.add(newsProcessorThread);
                         newsProcessorThread.start();
                     } else {
-                        //If we don't currently have the data, then we need to reach out to the NewsAPI to retrieve it and store it.
-                        //Spin up a thread to do this work while we're processing the rest of the data.
-                        //The data will be available on the next run if it was successfully retrieved
+                        /*
+                          If we don't currently have the data, then we need to reach out to the NewsAPI to retrieve it and store it.
+                          Spin up a thread to do this work while we're processing the rest of the data.
+                          The data will be available on the next run (of the application) if it was successfully retrieved and stored
+                        */
+
                         String directoryPath = newsFilePath + state;
                         String fileName = dateToPull + ".json";
                         NewsAPIRetrieverThread retrieveNewsThread = new NewsAPIRetrieverThread(state, dateToPull, dateToPull,

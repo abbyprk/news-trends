@@ -1,5 +1,3 @@
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.*;
 
@@ -7,7 +5,13 @@ import java.util.*;
  * Abby Parker
  * CSIS 612
  *
- * This application pulls data from the NewsAPI or from storage for the US states and territories by date and calculates trends in words over time.
+ * The NewsTrends class is the orchestrator of the application.
+ * The application asks the user for the number of days they want to search and then sends a request
+ * to the StateNewsDataHandler to process the data
+ * After the results have been processed, it uses the ReportUtil to generate an html report with the data trend information
+ *
+ * This application uses thread-level parallelism and data-level parallelism for retrieving and processing
+ * the news data.
  */
 public class NewsTrends {
     private static final int MAX_DAYS_TO_PROCESS = 5;
@@ -29,6 +33,10 @@ public class NewsTrends {
         }
     }
 
+    /**
+     * Gets the user input
+     * @return number of days to process
+     */
     private static int getDaysToProcess() {
         Scanner scanner = new Scanner(System.in);
         boolean valid = false;

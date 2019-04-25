@@ -11,7 +11,9 @@ import static j2html.TagCreator.h3;
  * Abby Parker
  * CSIS 612
  *
- * Uses a library called h2html for generating the report html
+ * This class is used for generating the html reports with the news trends results
+ *
+ * This class uses a library called h2html for generating the html
  * See: https://j2html.com/
  */
 
@@ -29,6 +31,14 @@ public class ReportUtil {
         }
     }
 
+    /**
+     * Generates the results report from the data passed in.
+     * Writes the report to the path specified in the "path.to.reports" app property
+     *
+     * @param data
+     * @return pathToGeneratedFile
+     * @throws IOException
+     */
     public String generateResultsReport(HashMap<String, Integer> data) throws IOException {
         Date today = new Date();
 
@@ -55,6 +65,13 @@ public class ReportUtil {
         return fileLocation;
     }
 
+    /**
+     * Uses the j2html library to create the html string
+     *
+     * Imports jquery, bootstrap (for styling), highcharts and this application's custom styles and javascript
+     * @param result
+     * @return html string
+     */
     public String generatePageReportHtml(String result) {
         try {
             ContainerTag html = html(
@@ -96,6 +113,13 @@ public class ReportUtil {
         }
     }
 
+    /**
+     * Custom Json is needed to display the data in the reports.
+     * This method walks the map and generates json objects and then sorts the array.
+     *
+     * @param data
+     * @return sorted json array
+     */
     public static String generateJsonDataForReport(HashMap<String, Integer> data) {
         String jsonData = "";
         try {
@@ -115,6 +139,11 @@ public class ReportUtil {
         return jsonData;
     }
 
+    /**
+     * Sorts the data from largest to smallest
+     * @param wordList
+     * @return
+     */
     public static ArrayList<JsonNode> sortData(ArrayList<JsonNode> wordList) {
         Collections.sort( wordList, new Comparator<JsonNode>() {
             @Override

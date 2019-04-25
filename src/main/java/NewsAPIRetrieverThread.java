@@ -16,9 +16,11 @@ import java.nio.file.Paths;
  * Abby Parker
  * CSIS 612
  *
+ *  This class is designed for making requests to retrieve data from the NewsAPI and then store the results in a file.
+ *  The class utilizes the apache http client for making the requests out to the NewsAPI
  */
 public class NewsAPIRetrieverThread extends Thread {
-    private static String PAGE_SIZE = "100"; //The max allowed for the API
+    private static String PAGE_SIZE = "100"; //The max allowed for the NewsAPI
     String q;
     String from;
     String to;
@@ -45,6 +47,10 @@ public class NewsAPIRetrieverThread extends Thread {
         getDataFromApiAndSaveToFile();
     }
 
+    /**
+     * Calls the API and stores the data to a file.
+     * If the API returns a 429, then we have exceeded the maximum number of requests for the account for the day
+     */
     private void getDataFromApiAndSaveToFile() {
         try {
             HttpClientBuilder client = HttpClientBuilder.create();
@@ -73,12 +79,24 @@ public class NewsAPIRetrieverThread extends Thread {
         }
     }
 
+    /**
+     * Writes the json data to a file.
+     *
+     * @param dataToWrite - the json to  write to the file
+     * @param directoryPath - directory to write to
+     * @param fileName - name of the file to save
+     * @throws IOException
+     */
     private void writeNewsDataToFile(String dataToWrite, String directoryPath, String fileName) throws IOException {
         File directory = new File(directoryPath);
         if (! directory.exists()){
             directory.mkdirs();
         }
+
         File file = new File (directoryPath + "/" + fileName);
+
+        //Uses Java 8's try-with-resources feature which will automatically close the file
+        //if there is an exception
         try (BufferedWriter br = Files.newBufferedWriter(Paths.get(file.getPath()))) {
             br.write(dataToWrite);
         }

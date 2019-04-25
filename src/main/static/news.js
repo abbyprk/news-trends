@@ -3,6 +3,8 @@
  *  CSIS 612
  *
  *  On page load, initialize the word map and the top 20 and bottom 20 lists
+ *  Uses highCharts.js to generate the word map
+ *  https://www.highcharts.com
 */
 $(document).ready(function () {
     var dataString = $('#wordMapData').text();

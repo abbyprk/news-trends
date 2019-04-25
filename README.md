@@ -27,7 +27,7 @@ $ git clone <paste github URL from git>
 $ cd news-trends
 ```
 2. Edit the application properties so that it points to your local folder and api key
-In the news-trends/src/main/resources/Application.properties folder, edit the following properties:
+In the `news-trends/src/main/resources/Application.properties` folder, edit the following properties:
 
 ```
 api.key={your_api_key}

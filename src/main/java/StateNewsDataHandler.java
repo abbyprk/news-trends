@@ -1,5 +1,6 @@
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import j2html.tags.ContainerTag;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
@@ -8,12 +9,11 @@ import org.apache.http.impl.client.HttpClientBuilder;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
+import static j2html.TagCreator.*;
 
 /**
  * Abby Parker
@@ -24,7 +24,8 @@ import java.util.stream.Collectors;
 public class StateNewsDataHandler {
     private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private HashMap<String, Integer> newsTrendsMap;
-    private static String[] STATES = {"ALABAMA", "ALASKA","ARIZONA", "ARKANSAS", "CALIFORNIA",
+    private Properties properties;
+    private static final String[] STATES = {"ALABAMA", "ALASKA","ARIZONA", "ARKANSAS", "CALIFORNIA",
             "COLORADO", "CONNECTICUT","DELAWARE", "FLORIDA", "GEORGIA", "HAWAII", "IDAHO", "ILLINOIS", "INDIANA",
             "IOWA", "KANSAS", "KENTUCKY", "LOUISANA", "MAINE", "MARYLAND", "MASSACHUSETTS", "MICHIGAN", "MINNESOTA",
             "MISSISSIPPI", "MISSOURI", "MONTANA", "NEBRASKA", "NEVADA", "NEW_HAMPSHIRE", "NEW_JERSEY", "NEW_MEXICO",
@@ -34,6 +35,14 @@ public class StateNewsDataHandler {
 
     protected StateNewsDataHandler() {
         this.newsTrendsMap = new HashMap<>();
+        properties = new Properties();
+
+        try {
+            InputStream inputStream = this.getClass().getResourceAsStream("Application.properties");;
+            properties.load(inputStream);
+        } catch (IOException e) {
+            System.out.println("Could not load properties to store data. Exception: " + e.getMessage());
+        }
     }
 
     /**
@@ -42,28 +51,19 @@ public class StateNewsDataHandler {
      * @param totalDays - the total number of days back that we should count
      * @return
      */
-    protected HashMap processNewsTrendsByState(Date date, int totalDays) {
-        Properties properties = new Properties();
+    protected HashMap<String, Integer> processNewsTrendsByState(Date date, int totalDays) {
         Calendar calDate = Calendar.getInstance();
         List<NewsProcessorThread> newsProcessorThreadList = new ArrayList<>();
         HttpClientBuilder client = HttpClientBuilder.create();
         HttpGet getNewsApiDataRequest;
         boolean tooManyRequests = false;
 
-
-        try {
-            InputStream inputStream = this.getClass().getResourceAsStream("Application.properties");;
-            properties.load(inputStream);
-        } catch (IOException e) {
-            System.out.println("Could not load properties to store data. Exception: " + e.getMessage());
-        }
-
-        //TODO: try to get json from file, look up by date and keyword
         String newsFilePath = properties.getProperty("path.to.data");
         String apiKey = properties.getProperty("api.key");
 
         try {
             for (String state : STATES) {
+                System.out.println("Processing " + state + "...");
                 for (int dayCount = totalDays; dayCount > 0; dayCount--) {
                     calDate.setTime(date);
                     calDate.add(Calendar.DATE, -dayCount);
@@ -75,11 +75,11 @@ public class StateNewsDataHandler {
                         JsonNode newsDataJson = new ObjectMapper().readTree(data);
 
                         //Spin up a new thread to process the data
-                        NewsProcessorThread newsProcessorThread = new NewsProcessorThread(newsTrendsMap, newsDataJson);
+                        NewsProcessorThread newsProcessorThread = new NewsProcessorThread(newsTrendsMap, newsDataJson, properties);
                         newsProcessorThreadList.add(newsProcessorThread);
                         newsProcessorThread.start();
                     } else if (!tooManyRequests){
-                        //TODO: if the data does not exist in the files then hit the newsApi
+                        //TODO: this should be kicked off and then processed by a new thread. takes too long to return
                         URIBuilder builder = new URIBuilder(properties.getProperty("news.api.path"));
                         String stateParam = state.toLowerCase().replace("_", " ");
                         builder.setParameter("q", stateParam)
@@ -97,7 +97,7 @@ public class StateNewsDataHandler {
                             JsonNode newsDataJson = new ObjectMapper().readTree(newsApiResponse.getEntity().getContent());
 
                             //Spin up a new thread to process the data
-                            NewsProcessorThread newsProcessorThread = new NewsProcessorThread(newsTrendsMap, newsDataJson);
+                            NewsProcessorThread newsProcessorThread = new NewsProcessorThread(newsTrendsMap, newsDataJson, properties);
                             newsProcessorThreadList.add(newsProcessorThread);
                             newsProcessorThread.start();
 
@@ -105,7 +105,7 @@ public class StateNewsDataHandler {
                             String fileName = dateToPull + ".json";
                             writeNewsDataToFile(newsDataJson.toString(), directoryPath, fileName);
                         } else if (newsApiResponse.getStatusLine().getStatusCode() == 429) {
-                            System.out.println("The number of requests for the developer account has been exceeeded. Do not retry");
+                            System.out.println("Error retrieving data for : " + stateParam + "The number of requests for the developer account has been exceeeded. Do not retry");
                             tooManyRequests = true;
                         }
                     }
@@ -117,24 +117,7 @@ public class StateNewsDataHandler {
 
         while (threadsAlive(newsProcessorThreadList)) {} //wait until all the threads are finished, then return the results
 
-        /*
-        * https://www.baeldung.com/java-hashmap-sort
-        * Sort the data by key using stream
-        */
-        HashMap<String, Integer> sortedResults;
-        synchronized (newsTrendsMap) {
-            sortedResults = newsTrendsMap.entrySet()
-                    .stream()
-                    .sorted((Comparator<Map.Entry<String, Integer>> & Serializable)
-                            (c2, c1) -> c1.getValue().compareTo(c2.getValue()))
-                    .collect(Collectors.toMap(
-                            Map.Entry::getKey,
-                            Map.Entry::getValue,
-                            (oldValue, newValue) -> oldValue, LinkedHashMap::new));
-        }
-
-
-        return sortedResults;
+        return newsTrendsMap;
     }
 
     private void writeNewsDataToFile(String dataToWrite, String directoryPath, String fileName) throws IOException {
@@ -149,72 +132,6 @@ public class StateNewsDataHandler {
     }
 
     /**
-     *
-     * @param date - date to start with
-     * @param totalDays - the total number of days back that we should count
-     * @return
-     */
- /*   protected HashMap processNewsTrendsByState(Date date, Integer totalDays) {
-        Properties properties = new Properties();
-
-        try {
-            InputStream inputStream = this.getClass().getResourceAsStream("Application.properties");;
-            properties.load(inputStream);
-        } catch (IOException e) {
-            System.out.println("Could not load properties to store data. Exception: " + e.getMessage());
-        }
-
-        //TODO: try to get json from file, look up by date and keyword
-        String newsFilePath = properties.getProperty("path.to.data") + "newmexico"; //hardcoded
-        File newsDataDir = new File(newsFilePath);
-        File[] newsData = newsDataDir.listFiles();
-        List<NewsProcessorThread> newsProcessorThreadList = new ArrayList<>();
-        int numThreads = 0;
-
-        try {
-            if (newsData != null) {
-                for (File news : newsData) {
-                    //only process json data in the folder
-                    if (news.getName().matches(".*\\.json")) {
-                        String data = new String(Files.readAllBytes(Paths.get(news.getPath())));
-                        JsonNode newsDataJson = new ObjectMapper().readTree(data);
-
-                        //Spin up a new thread to process the data
-                        NewsProcessorThread newsProcessorThread = new NewsProcessorThread(newsTrendsMap, newsDataJson);
-                        newsProcessorThreadList.add(newsProcessorThread);
-                        newsProcessorThread.start();
-                    }
-                }
-
-            } else {
-                //TODO: if the data does not exist in the files then hit the newsApi
-                System.out.println("Could not find any data to process");
-                //TODO: For each file, spin up a thread to process the data
-            }
-        } catch (IOException ie) {
-            System.out.println(ie.getMessage());
-        }
-
-        while (threadsAlive(newsProcessorThreadList)) {} //wait until all the threads are finished, then return the results
-
-        /*
-        * https://www.baeldung.com/java-hashmap-sort
-        * Sort the data by key using stream
-        */
-       /* HashMap<String, Integer> sortedResults = newsTrendsMap.entrySet()
-                .stream()
-                .sorted((Comparator<Map.Entry<String, Integer>> & Serializable)
-                        (c2, c1) -> c1.getValue().compareTo(c2.getValue()))
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (oldValue, newValue) -> oldValue, LinkedHashMap::new));
-
-
-        return sortedResults;
-    } */
-
-    /**
      * Checks to see if any of the threads are still doing work.
      * @param newsProcessorThreads
      * @return true if at least one thread is alive, false if all are done
@@ -227,5 +144,70 @@ public class StateNewsDataHandler {
         }
         return false;
     }
+
+    /*public String generateResultsReport(String resultData) throws IOException {
+        Date today = new Date();
+        String directoryPath = properties.getProperty("path.to.reports");
+        String fileLocation = directoryPath + "dataTrendsResults" + "_" + today.getTime() + ".html";
+        try {
+
+            File directory = new File(directoryPath);
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+
+            File report = new File(fileLocation);
+            FileOutputStream os = new FileOutputStream(report);
+            OutputStreamWriter osw = new OutputStreamWriter(os);
+            Writer writer = new BufferedWriter(osw);
+            writer.write(generatePageReportHtml(resultData));
+            writer.close();
+        } catch (IOException e) {
+            System.out.println("There was a problem writing the report to " + fileLocation + ", exception: " + e.getMessage());
+        }
+
+        return fileLocation;
+    }
+
+    public String generatePageReportHtml(String result) {
+        try {
+            ContainerTag html = html(
+                head(
+                    title("News Trends Stats"),
+                    script().withSrc("https://code.jquery.com/jquery-3.2.1.slim.min.js"),
+                    script().withSrc("https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"),
+                    script().withSrc("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"),
+                    script().withSrc("https://code.highcharts.com/highcharts.js"),
+                    script().withSrc("https://code.highcharts.com/modules/wordcloud.js"),
+                    script().withType("text/javascript").withSrc("news.js"),
+                    link().withRel("stylesheet").withHref("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"),
+                    link().withRel("stylesheet").withHref("styles.css")
+                ),
+                body(
+                    div(
+                        attrs(".jumbotron"),
+                        h1("News Trends Stats").attr("class=\"center\"")
+                    ),
+                    div(
+                        attrs(".container"),
+                        div(attrs("#result-alert-error.alert.alert-danger.hidden"))
+                                .withText("There was a problem retrieving the data. You may have exceeded your developer account limit for the news API. Please limit the number of days and try again."),
+                        div(attrs("#wordMapData.hidden")).withText("#dataToReplace"),
+                        div(attrs("#wordMapContainer")),
+                        div(
+                                attrs("#wordLists.row"),
+                                div(attrs("#top20.col-md-6")),
+                                div(attrs("#bottom20.col-md-6"))
+                        )
+                    )
+                )
+            );
+
+            return html.render().replace("#dataToReplace", result);
+        } catch (Exception e) {
+            System.out.println("There was an exception while generating the html report: " + e.getMessage());
+            return html(body(h3("There was an exception while generating the html report: " + e.getMessage()))).render();
+        }
+    }*/
 
 }

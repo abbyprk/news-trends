@@ -23,6 +23,7 @@
 hs_err_pid*
 
 news-trends.iml
-*/*.DS_Store
+*.DS_Store
 .idea/
 target/*
+*dataTrendsResults*
